@@ -2,11 +2,12 @@
 layout: post
 title: "Academical project report about document malwares, and a powerful macros obfuscator."
 date: 2019-02-10
+comments: true
 ---
 
 # Description
 
-I share the report of my MSc graduation project of Télécom SudParis. This project was done with my team mate [Nicolas Bonnet](https://github.com/bonnetn), and in collaboration with the company [Advens](https://www.advens.fr/).
+I share the report of my MSc graduation project of Télécom SudParis. This project was done with my teammate [Nicolas Bonnet](https://github.com/bonnetn), and in collaboration with the company [Advens](https://www.advens.fr/).
 
 ## About the report
 

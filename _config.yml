@@ -1,8 +1,8 @@
 name: Thomas Leroy
+absolute_url: https://thole.fr
 logo: https://avatars1.githubusercontent.com/u/32497783?s=400&u=5a2350bf7f02dcd333282ecf35e552f9e88e53e3&v=4
 email: thomas.leroy.mp@gmail.com
 linkedin: https://www.linkedin.com/in/thomas-leroy-31786a138/
-cv: /sources/re_cv.pdf
 
 permalink: /blog/:year/:month/:day/:title
 github_username: LthomasMP

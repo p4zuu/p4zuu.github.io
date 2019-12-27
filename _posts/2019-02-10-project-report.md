@@ -2,7 +2,7 @@
 layout: post
 title: "Academical project report about document malwares, and a powerful macros obfuscator."
 date: 2019-02-10
-comments: true
+comments: false
 ---
 
 ## Description

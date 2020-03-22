@@ -18,4 +18,4 @@ The final part is about PDF malwares.
 
 The whole report is in French. For people that don't understand this lovely language, I am sorry. Don't hesitate to contact me or my teammate if you have questions about the project, we will answer you with pleasure.
 
-You can download the report [here](/sources/2019-02-10/Report.pdf), and don't forget to visit the project's Github repo. Enjoy!
+You can download the report [here](/files/2019-02-10/Report.pdf), and don't forget to visit the project's Github repo. Enjoy!

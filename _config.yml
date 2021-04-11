@@ -1,8 +1,19 @@
-name: Thomas Leroy
-absolute_url: https://thole.fr
-email: thomas.leroy.mp@gmail.com
-twitter: https://twitter.com/P4zuu
+author:
+  name: Thomas Leroy
+  email: thomas.leroy.mp@gmail.com
 
+absolute_url: https://thole.fr
 permalink: /blog/:year/:month/:day/:title
-github_username: p4zuu
-theme: jekyll-theme-minimal
+
+markdown: kramdown
+theme: minima
+
+minima:
+  social_links:
+    twitter: p4zuu
+    github: P4zuu
+
+plugins:
+  - jekyll-feed
+  - analytics
+  - disqus

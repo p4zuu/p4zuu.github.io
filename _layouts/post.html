@@ -7,12 +7,12 @@ layout: default
 
 <!-- Post content -->
 <div class="post">
-  {{ content }}
+    {{ content }}
 </div>
 
 <!-- Post comments -->
 <div class="notecomments">
-  {% if page.comments %}
+    {% if page.comments %}
     {% include disqus.html %}
-  {% endif %}
+    {% endif %}
 </div>

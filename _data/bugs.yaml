@@ -1,0 +1,13 @@
+bugs:
+    - package: NetBSD Kernel
+      title:  integer overlow leading to kernel heap out-of-bounds write in the wg network interface
+      url: https://github.com/NetBSD/src/commit/3997685080a32d7239b2648faf370e70ee3bace2
+
+    - package: buger/jsonparser
+      title: out-of-bounds access
+      url: https://github.com/buger/jsonparser/issues/178
+
+    - package: buger/jsonparser
+      title: infinite loop
+      url: https://github.com/buger/jsonparser/issues/179
+

@@ -15,5 +15,4 @@ minima:
 
 plugins:
   - jekyll-feed
-  - analytics
   - disqus

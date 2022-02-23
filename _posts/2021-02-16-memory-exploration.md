@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "From Linux kernel page exploration to local privilege escalation"
+title: "Linux kernel page exploration and privilege escalation"
 date: 2021-02-26
 comments: true
 ---

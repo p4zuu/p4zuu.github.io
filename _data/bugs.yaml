@@ -4,7 +4,7 @@ bugs:
       url: https://kde.org/info/security/advisory-20220216-1.txt
     
     - package: NetBSD Kernel
-      title:  integer overlow to kernel heap out-of-bounds write in the wg network interface
+      title:  integer overflow leading to kernel heap out-of-bounds write in the wg network interface
       url: https://github.com/NetBSD/src/commit/3997685080a32d7239b2648faf370e70ee3bace2
 
     - package: buger/jsonparser

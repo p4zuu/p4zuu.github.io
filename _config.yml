@@ -11,7 +11,7 @@ theme: minima
 minima:
   social_links:
     twitter: p4zuu
-    github: P4zuu
+    github: p4zuu
 
 plugins:
   - jekyll-feed

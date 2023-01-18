@@ -23,6 +23,8 @@
                 <a class="page-link" href="{{ my_page.url | relative_url }}">{{ my_page.title | escape }}</a>
                 {%- endif -%}
                 {%- endfor -%}
+                {%- assign social = site.minima.social_links -%}
+                <a class="page-link" href="https://github.com/{{ social.github | cgi_escape | escape }}/ctf">CTF solves</a>
             </div>
         </nav>
         {%- endif -%}

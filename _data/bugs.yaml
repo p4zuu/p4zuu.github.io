@@ -1,4 +1,8 @@
 bugs:
+    - package: obs-service-go_modules
+      title: arbitrary directory delete (CVE-2022-45155)
+      url: https://bugzilla.suse.com/show_bug.cgi?id=1201138
+
     - package: kcron
       title: Invalid temporary file handling (CVE-2022-24986)
       url: https://kde.org/info/security/advisory-20220216-1.txt
@@ -15,6 +19,3 @@ bugs:
       title: infinite loop
       url: https://github.com/buger/jsonparser/issues/179
 
-    - package: obs-service-go_modules
-      title: arbitrary directory delete (CVE-2022-45155)
-      url: https://bugzilla.suse.com/show_bug.cgi?id=1201138

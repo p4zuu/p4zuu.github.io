@@ -103,4 +103,4 @@ miri correctly reports that the temporary vector is allocated when initializing 
 this context, and then used in `slice::from_raw_parts(recv_iov[0].iov_base as *const u8, ...)`.
 If you wondered, this code perfectly builds, without any complain.
 
-So note next time, running miri to suspicious code can save hours of code review.
+Note for next time, running miri to suspicious code can save hours of code review.

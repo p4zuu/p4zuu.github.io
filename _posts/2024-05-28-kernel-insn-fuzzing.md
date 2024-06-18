@@ -14,8 +14,8 @@ One of these uses is to handle #VC exceptions. VMM Communication Exception (or
 [15.35.5 #VC Exception in AMD manual](https://www.amd.com/content/dam/amd/en/documents/processor-tech-docs/programmer-references/24593.pdf)).
 Some VM-exits (Non-Automatic Exits or NAE, cf
 [Table 7: List of Supported Non-Automatic Events](https://www.amd.com/content/dam/amd/en/documents/epyc-technical-docs/specifications/56421.pdf))
-requires the hypervisor to modify the guest's registers (eg. CPUID result is
-stored in rax, rbx, rcx and rdx). However, the hypervisor can't do this since
+require the hypervisor to modify the guest's registers (eg. CPUID result is
+stored in RAX, RBX, RCX and RDX). However, the hypervisor can't do this since
 the registers state is encrypted (and integrity protected for SEV-SNP). So when
 a NAE exits occurs in the guest, the CPU raises a #VC, handled by the guest
 kernel by setting up a communication channel with the hypervisor, but this is
@@ -24,15 +24,23 @@ out of context. You can also refer to Tom's
 explanations
 
 However, to properly handle a #VC exception, the guest needs to find out which
-NAE event raised the #VC. To do that, the guest's kernel needs to decode the
-instructions pointed by RIP when the exception occurred (RIP is pushed on the
-stack by the CPU). Once the guest decoded the instruction that raised the
-exception (eg. a CPUID), it can properly handle the #VC with the appropriate
-handler (eg. requesting the hypervisor to
-[perform a CPUID](https://github.com/torvalds/linux/blob/1613e604df0cd359cf2a7fbd9be7a0bcfacfabd0/arch/x86/kernel/sev.c#L1789)).
+NAE event raised the #VC. The CPU actually pushes the NAE exit code through the
+error code on the kernel stack, so that the kernel knows which NAE exit
+occurred. However, even when knowing the NAE exit code, it could not be enough
+to fully handle the VM-exit, for example for an IN/OUT instruction, we need to
+know what port (and value) is used in the instruction. Moreover, due to the
+recent [AHOI attacks](https://ahoi-attacks.github.io/), we also need to
+double-check that the instruction that raised the NAE-events matches the
+CPU-provided error code.
 
-The funny part is, the instruction decoder is an attack surface. A guest **user
-** can trigger a #VC (eg. CPUID can be executed from CPL-3), and user entry will
+For all these reasons, the guest kernel needs to decode the instructions pointed
+by RIP when the exception occurred (RIP is aslo pushed on the stack by the CPU).
+Once the guest decoded the instruction that raised the exception (eg. a CPUID),
+it can properly handle the #VC with the appropriate handler (eg. by emulating
+the instruction, or calling the hypervisor).
+
+The funny part is, the instruction decoder is an attack surface. A guest _user_
+can trigger a #VC (eg. CPUID can be executed from CPL-3), and user entry will
 land in the kernel instruction decoder. Moreover, there is an intrinsic race
 between when the #VC exception is raised, and when the exception handler fetches
 the instructions for decoding. That opens a tiny window to an attacker to write

@@ -34,7 +34,7 @@ double-check that the instruction that raised the NAE-events matches the
 CPU-provided error code.
 
 For all these reasons, the guest kernel needs to decode the instructions pointed
-by RIP when the exception occurred (RIP is aslo pushed on the stack by the CPU).
+by RIP when the exception occurred (RIP is also pushed on the stack by the CPU).
 Once the guest decoded the instruction that raised the exception (eg. a CPUID),
 it can properly handle the #VC with the appropriate handler (eg. by emulating
 the instruction, or calling the hypervisor).
@@ -70,20 +70,22 @@ SYSCALL_DEFINE2(decode_insn, unsigned char __user *, user_insn_buf,
 {
 	struct insn insn;
 	unsigned char insn_buf[MAX_INSN_SIZE] = { 0 };
-	int ret;
+	int err;
 
 	if (copy_from_user(&insn_buf, user_insn_buf, sizeof(insn_buf)))
-		return -EFAULT;
+		goto err;
 
-	ret = insn_decode(&insn, insn_buf, sizeof(insn_buf), INSN_MODE_64);
-	if (ret < 0)
-		goto out;
+	err = insn_decode(&insn, insn_buf, sizeof(insn_buf), INSN_MODE_64);
+	if (err < 0)
+		goto err;
 
 	if (copy_to_user(decoded_insn, &insn, sizeof(*decoded_insn)))
-		return -EFAULT;
+		goto err;
 
-out:
-	return ret;
+	return 0;
+
+err:
+	return -EFAULT;
 }
 ```
 

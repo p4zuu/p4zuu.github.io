@@ -1,4 +1,8 @@
 bugs:
+    - package: Cloud Hypervisor
+      title: TOCTOU race-condition in VSock virtio
+      url: https://github.com/cloud-hypervisor/cloud-hypervisor/pull/7530     
+
     - package: obs-service-go_modules
       title: arbitrary directory delete (CVE-2022-45155)
       url: https://bugzilla.suse.com/show_bug.cgi?id=1201138
